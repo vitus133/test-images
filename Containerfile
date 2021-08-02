@@ -1,7 +1,16 @@
-FROM registry.redhat.io/rhel8/httpd-24
+FROM python:3.9-alpine
 
+ARG ZIP_NAME
 # Add application sources
-ADD index.html /var/www/html/index.html
+USER root
+RUN mkdir /usr/src/spam
+WORKDIR /usr/src/spam
+COPY $ZIP_NAME /usr/src/spam
 
-# The run script uses standard ways to run the application
-CMD run-httpd
+RUN mkdir /usr/src/srv
+WORKDIR /usr/src/srv
+
+COPY server.sh /usr/src/srv/
+RUN chown -R 1001:1001 /usr/src/srv
+USER 1001
+ENTRYPOINT ["/usr/src/srv/server.sh"]
