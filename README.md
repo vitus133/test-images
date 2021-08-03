@@ -4,21 +4,15 @@ Creating test container images of different sizes to simulate customer' workload
 
 There is a need for 100 unique images of different sizes:
 
-Number of images          rough size 
-
-25                   100-150 MB 
-
-25                   200-250 MB 
-
-10                   250-300 MB 
-
-4                     400 MB 
-
-4                     500 MB 
-
-5                     600 MB 
-
-2                     800 MB 
+| Number of images  | rough size    |
+| ----------------- |:-------------:|
+| 25                |  100-150 MB   |
+| 25                |  200-250 MB   |
+| 10                |  250-300 MB   |
+| 4                 |  400 MB       |
+| 4                 |  500 MB       |
+| 5                 |  600 MB       |
+| 2                 |  800 MB       |
 
 The containers must be able to answer HTTP GET with 200 OK. There is a range of 5 TCP ports the container must bind to.
 
