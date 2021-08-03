@@ -3,6 +3,7 @@
 Creating test container images of different sizes to simulate customer' workload
 
 There is a need for 100 unique images of different sizes:
+
 Number of images          rough size 
 
 25                   100-150 MB 
