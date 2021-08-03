@@ -31,3 +31,22 @@ For example
 `spam_150_8002` means that container size is about 150 mb and HTTP server binds to port 8002
 
 The registry assumes username `dummy` and password `dummy` in this version
+
+## Test ## 
+1. Run the container of the required size and port, for example:
+  ```bash
+  podman run -it --rm -p 8000:8000 dhcp-55-222.lab.eng.tlv2.redhat.com:5000/spam_250_5_8000:latest
+  ```
+2. In another terminal, send:
+  ```bash
+    $ curl -I -X GET  dhcp-55-222.lab.eng.tlv2.redhat.com:8000
+  ```
+  response:
+  ```bash
+    HTTP/1.0 200 OK
+    Server: SimpleHTTP/0.6 Python/3.9.6
+    Date: Tue, 03 Aug 2021 13:21:24 GMT
+    Content-type: text/html; charset=utf-8
+    Content-Length: 340
+
+  ```
