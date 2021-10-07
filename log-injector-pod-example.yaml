@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: log-injector
+spec:
+  containers:
+  - image: quay.io/vgrinber/logging:latest
+    imagePullPolicy: Always
+    name: log-injector-container
+    resources: {}
+    env:
+    - name: MESSAGE_LEN
+      value: "100"
+    - name: LOG_PERIOD_SEC
+      value: "1/5"
+    - name: POD_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name      
