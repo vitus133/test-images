@@ -18,24 +18,40 @@ The containers must be able to answer HTTP GET with 200 OK. There is a range of 
 
 ## Usage ##
 ```bash
-python main.py <registry fqdn>
+usage: main.py [-h] [-r REGISTRY] [-p PREFIX] [-t TAG] [-U USERNAME]
+               [-P PASSWORD]
+               namespace
+
+positional arguments:
+  namespace             Registry namespace, for example `test_images'
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -r REGISTRY, --registry REGISTRY
+                        Container registry to push images to (default -
+                        'quay.io')
+  -p PREFIX, --prefix PREFIX
+                        Repository prefix (default - 'spam')
+  -t TAG, --tag TAG     Image tag (default - 'latest')
+  -U USERNAME, --username USERNAME
+                        Registry username
+  -P PASSWORD, --password PASSWORD1
+                        Registry password
 ```
 for example
 ```bash
-python main.py dhcp-55-222.lab.eng.tlv2.redhat.com:5000
+python main.py test_images
 ```
 
 The containers naming scheme:
 `spam_<size>_<port>`
 For example
-`spam_150_8002` means that container size is about 150 mb and HTTP server binds to port 8002
-
-The registry assumes username `dummy` and password `dummy` in this version
+`spam_150_0_8002` means that container size is about 150 mb and HTTP server binds to port 8002
 
 ## Test ## 
 1. Run the container of the required size and port, for example:
   ```bash
-  podman run -it --rm -p 8000:8000 dhcp-55-222.lab.eng.tlv2.redhat.com:5000/spam_250_5_8000:latest
+  podman run -it --rm -p 8000:8000 quay.io/test_images/spam_250_5_8000:latest
   ```
 2. In another terminal, send:
   ```bash
@@ -76,17 +92,12 @@ spec:
 ```
 MESSAGE_LEN - number of random characters added to each log message after the pod name and the date
 LOG_PERIOD_SEC - how much time (in seconds) we sleep before printing the next log message. It can be fractional as in the example (e.g. "1/8" or "0.125" should be fine)
-
-When deployed, it will produce logs like that:
+The entrypoint must be set to log_injector.sh
+Manual test:
 ```bash
-oc logs pod/log-injector -f
-log-injector: Wed Oct  6 20:09:35 UTC 2021 LsmA6K8jN3mg5weQf0uZpZEn127Bqb0hYQ0tMPto0E4f7lYKELEvcg8py6UYWGDOxYq5rmkC7Y4Z5yQtJp8h0IiGlumcHVW8UJ3A
-log-injector: Wed Oct  6 20:09:35 UTC 2021 sSp4P7e3rqxgTieD2OACCFCvgmVmS0yzFJMsgg0DTcwQrEee1dAtMUd9ss8DkFslvLtlISTgUQ6GdquL2npz7c4DzqSe7TYMd8ah
-log-injector: Wed Oct  6 20:09:35 UTC 2021 LdAteyqrR5XBXbwrKxYiiPMAmlin8dHShCtZLJaP5DqU8Kaotg3s8spVmnpt5vEQOBfSkZ40ygFKHHbRQVY2Z622AgEMGcMW0ule
-log-injector: Wed Oct  6 20:09:35 UTC 2021 oNv572cMqfyHLmQjOuv6h2GiwidzFHPHKM4JfX3f06ifgvroULT6ruKeqQdz3WZgj8ZqyfxWglmFSLhc0cP9x5v2jh74Eka4Tzct
-log-injector: Wed Oct  6 20:09:36 UTC 2021 Wol1kllESDPXUcNfsfqVoLKbGmUd1buaEDEePkxGBr4lQPjzIQpROaPZZkiCjScC2VRUl7BLJ4ghkT4Y0qEC0tnUMyuY23YkL1Yd
-log-injector: Wed Oct  6 20:09:36 UTC 2021 9AwM7x83WyDlBgBPotqesfH4iv1v5BI68asqrVSkrsedcea9e26qh1msiV7aBnGHFStcnYSo4G6wAYBOGXvaANXsdJYAH3E4d6g3
-log-injector: Wed Oct  6 20:09:36 UTC 2021 oPz8bjYAPsPuc1VgzGdms2mFkJBDL6aZOpyhxn7C6ASySY6zHono9BWdEaa922nSiAMPoX4b2cqkc8NdcyqaEWeThieT34sj92CV
-log-injector: Wed Oct  6 20:09:36 UTC 2021 2sDshIALy9wcRfdDaWJozv7wlX7EUZzQ0fkSMBoaH122w2he1QGcWXUYB1HiWAnaWy4R7eAhWod0sjKN0rxWNQf8vS0C4ohAOypq
-log-injector: Wed Oct  6 20:09:36 UTC 2021 Nk8UcsXr5Hg0agha8LUF8n5X67zkmxbw8CGpUZZEi3nnWqbwhjgCIQ3lOfDQbW6iQNSIs346KIf0Bw9gNi4MU1fHabxLtXM8kUnv
+$ podman run -it --entrypoint="/usr/src/srv/log_injector.sh" -e LOG_PERIOD_SEC=2 -e MESSAGE_LEN=20 -e POD_NAME=rrr quay.io/test_images/spam_50_0_8000:latest
+rrr: Sat Apr 30 16:17:51 UTC 2022 MhloymjGkNDZ38ODv7rm
+rrr: Sat Apr 30 16:17:53 UTC 2022 BLR8dcgkCjD8n0e1n9pt
+rrr: Sat Apr 30 16:17:55 UTC 2022 yf0q1wVYFYs9jTsdRRaV
+rrr: Sat Apr 30 16:17:57 UTC 2022 UKx7i9SP67ndH3AKcXTS
 ```
