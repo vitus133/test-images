@@ -6,21 +6,46 @@ import subprocess
 import os
 import sys
 import stat
+import argparse
 from jinja2 import Template
 
 
 images = [
-    {'size_mbytes': 150, 'qty': 25},
-    {'size_mbytes': 250, 'qty': 25},
-    {'size_mbytes': 300, 'qty': 10},
-    {'size_mbytes': 400, 'qty': 4},
-    {'size_mbytes': 500, 'qty': 4},
-    {'size_mbytes': 600, 'qty': 5},
-    {'size_mbytes': 800, 'qty': 2}]
+    {'size_mbytes': 150, 'qty': 25}
+    ,{'size_mbytes': 250, 'qty': 25}
+    ,{'size_mbytes': 300, 'qty': 10}
+    ,{'size_mbytes': 400, 'qty': 4}
+    ,{'size_mbytes': 500, 'qty': 4}
+    ,{'size_mbytes': 600, 'qty': 5}
+    ,{'size_mbytes': 800, 'qty': 2}
+    ]
 
 base_image_weight_mb = 60
 port_range = (8000, 8004)
 
+def get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-r', '--registry',
+        type=str, default="quay.io",
+        help="Container registry to push images to (default - 'quay.io')")
+    parser.add_argument('namespace',
+        type=str,
+        help="Registry namespace, for example `test_images'")
+    parser.add_argument('-p', '--prefix',
+        type=str, default="spam",
+        help="Repository prefix (default - 'spam')")
+    parser.add_argument('-t', '--tag',
+        type=str, default="latest",
+        help="Image tag (default - 'latest')")
+    parser.add_argument('-U', '--username',
+        type=str,
+        help="Registry username")        
+    parser.add_argument('-P', '--password',
+        type=str,
+        help="Registry password")        
+    
+    
+    return parser.parse_args()
 
 def subprocess_wrapper(cmd: list):
     cwd = os.getcwd()
@@ -36,7 +61,7 @@ def subprocess_wrapper(cmd: list):
                 print(f"stderr: {output[1].decode()}")
     except Exception as cpe:
         print(cpe)
-        exit(1)
+        sys.exit(1)
 
 
 def render_entrypoint(port: int):
@@ -51,46 +76,46 @@ def render_entrypoint(port: int):
     
 
 def build_img(fn: str):
+    tagged_to = f"{args.registry}/{args.namespace}/{fn}:{args.tag}"
     cmd = ["/usr/bin/podman",
-           "build",
+           "build", ".",
            "--build-arg",
            f"ZIP_NAME={fn}",
            "-t",
-           f"{fn}:latest",
+           tagged_to,
            "-f",
            "Containerfile"]
     subprocess_wrapper(cmd)
+    return tagged_to
 
 
-def login(username: str, password: str, registry: str):
+def login():
     cmd = ["podman", "login",
-           "-u", f"{username}",
-           "-p", f"{password}",
-           f"{registry}"]
+           "-u", f"{args.username}",
+           "-p", f"{args.password}",
+           f"{args.registry}"]
     subprocess_wrapper(cmd)
 
 
-def push_img(registry:str, imgname:str):
+def push_img(tagged_to: str):
     cmd = ["podman", "push",
-           f"{imgname}:latest",
-           f"{registry}/{imgname}:latest"]
+           f"{tagged_to}"]
     subprocess_wrapper(cmd)
 
 
 if __name__ == '__main__':
+    args = get_args()
     try:
-        if len(sys.argv) < 2:
-            print("Usage: python main.py 'target_registry'")
-            exit(1)
         report = []
         port = port_range[0]
-        login("dummy", "dummy", sys.argv[1])
+        if args.username is not None and args.password is not None:
+            login()
         for item in images:
             for instance in range(item.get('qty')):
                 data = bytearray(random.getrandbits(8) for _ in range(
                     1048576 * (item.get(
                         'size_mbytes') - base_image_weight_mb)))
-                fn = f"spam_{item.get('size_mbytes')}_{instance}_{port}"
+                fn = f"{args.prefix}_{item.get('size_mbytes')}_{instance}_{port}"
 
                 with zipfile.ZipFile(fn, mode="a") as zf:
                     zf.writestr('1', bytes(data))
@@ -100,13 +125,13 @@ if __name__ == '__main__':
                 port += 1
                 if port > port_range[1]:
                     port = port_range[0]
-                build_img(fn)
+                tagged_to = build_img(fn)
                 os.unlink(fn)
-                push_img(sys.argv[1], fn)
-                report.append(f"{sys.argv[1]}/{fn}:latest")
+                push_img(tagged_to)
+                report.append(f"{args.registry}/{args.namespace}/{fn}:{args.tag}")
     except Exception as e:
         print(e)
-        exit(1)
+        sys.exit(1)
     finally:
         with open("report.txt", "w") as rp:
             rp.write('\n'.join(report))
