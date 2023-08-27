@@ -1,3 +1,6 @@
 #!/bin/sh
 
-/usr/local/bin/python -m http.server --bind :: {{ port }}
+BIND_OPTS=""
+[ -f /proc/net/if_inet6 ] && BIND_OPTS="--bind ::"
+
+/usr/local/bin/python -m http.server $BIND_OPTS {{ port }}
