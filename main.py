@@ -43,7 +43,9 @@ def get_args():
     parser.add_argument('-P', '--password',
         type=str,
         help="Registry password")        
-    
+    parser.add_argument('-b', '--builder',
+        type=str, default="podman",
+        help="Image builder tool (default - podman, docker is the second tested option)")
     
     return parser.parse_args()
 
@@ -77,7 +79,7 @@ def render_entrypoint(port: int):
 
 def build_img(fn: str):
     tagged_to = f"{args.registry}/{args.namespace}/{fn}:{args.tag}"
-    cmd = ["/usr/bin/podman",
+    cmd = [args.builder,
            "build", ".",
            "--build-arg",
            f"ZIP_NAME={fn}",
@@ -90,7 +92,7 @@ def build_img(fn: str):
 
 
 def login():
-    cmd = ["podman", "login",
+    cmd = [args.builder, "login",
            "-u", f"{args.username}",
            "-p", f"{args.password}",
            f"{args.registry}"]
@@ -98,8 +100,10 @@ def login():
 
 
 def push_img(tagged_to: str):
-    cmd = ["podman", "push",
+    cmd = [args.builder, "push",
            f"{tagged_to}"]
+    subprocess_wrapper(cmd)
+    cmd = [args.builder, "rmi", f"{tagged_to}"]
     subprocess_wrapper(cmd)
 
 
